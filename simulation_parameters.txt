@@ -1,0 +1,45 @@
+#This is to write down the choices of simulated parameters:
+We were thinking of sort of modelling this on a Drosophila genome with Drosophila-like parameters and you had suggested that we simulate 100 kb or 1Mb. So here are some details that I was thinking of:
+>> Genome structure:
+Number of exons in each gene: 5
+Number of introns in each gene: 4
+Exon size: 300 bp
+Intron size: 100 bp
+Fraction of the genome that is functional/exonic: 20%
+Intergenic region for 100Kb chromosome and 20% exons: 5209 bp
+Intergenic region for 1Mb chromosome and 20% exons: 5558 bp
+
+>> Population parameters:
+Ne = 5000
+mutation rate = 10^-6 (which would make 4Neu = 0.02)
+rec rate = 2 x 10^-6 (which would make Ner = 0.01)
+
+Now in the real Drosophila population,
+Ne is ~10^6
+mutation rate = 3 x 10^-9 - 4.5 x 10^-9
+rec rate = 1 x 10^-8
+So 4Neu = 0.01 - 0.018 (depending on the mutation rate)
+And pi at synonymous sites = 0.019
+Also, Ner  = 0.01
+
+>>Number of replicates: 100
+
+>> Mutation and recombination variation:
+Draw a different rec and mut rate from a distribution around those means every 10kb.
+Assume gaussian distribution such that 2*SD (which contains ~95% of the data) is 2-fold and 0.5-fold that of the mean.
+
+>> Purifying selection and BGS:
+f0=f1=f2=f3=25%.
+
+>> For Demographic changes:
+
+For growth: simulate a 5-fold growth such that Nanc = 5000 and Ncur = 25,000 with time of change 100 generations ago. I'm assuming instantaneous change if good enough for now.
+
+For decline: simulate Nanc = 5000, and Ncur = 100 with t=100 generations ago.
+
+>> For Figure 2:
+I was thinking here we could just have a neutral constant size model with a few different progeny skew values (say, 0, 0.5, 0.1, 0.15), and then fit via ABC a growth model and a sweep model to those.
+
+>> For Figure 3:
+I think we could use one of the selection models and one of the demog models from Figure 1, and show ABC when the mut and rec rates are known perfectly, vs when they need to be drawn from wide and flat priors.
+I was thinking we would have a single constant mut and rec rate. one panel would be inference of selection (when selection is the true model) and inference of demog (when demog is the true model), in which the true mut and rec rates are known; the other panel would be the same but when mut and rec must be drawn from very wide flat priors.
