@@ -12,6 +12,7 @@ which simulates using:
 >> simulate_msprime_inst_change_divergence_abc.py
 and masks coding regions in the output using:
 >> mask_exonic_regions_v2.py
+and file genome_structure_exon50.txt
 
 Step 3: Get the statistics:
 >> queue_stats.sh
