@@ -1,0 +1,29 @@
+Workflow:
+
+Step 1: Draw parameter values randomly from priors:
+>> python generate_sampling_scheme_pos_selection.py
+
+Output:
+eqm_pos_100kb_logunif_parameters.txt
+
+Step 2: Simulate recurrent positive selection scenarios:
+>> run_100kb_slim_array_pos_selection_gro.sh
+>> make_command_file_gro.py
+>> eqm_pos_exon50_100kb.slim
+
+Step 3: mask coding regions in the output using:
+>> run_mask_ms_array_gro.sh
+>> mask_exonic_regions_v2.py
+
+Step 4: Get the statistics:
+>> queue_stats.sh
+>> run_stats_exon50_100kb_slim_abc.sh
+>> statistics_slidingwindow_pylibseq_general_reps.py
+>> get_divergence_from_slim.py
+>> get_lambda_from_slim.py
+
+Step 5: Make the final list of stats for abc:
+>> python make_table_statistics_abc.py
+
+Output:
+eqm_pos_100kb_2000.stats
