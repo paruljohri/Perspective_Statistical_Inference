@@ -1,0 +1,26 @@
+Workflow:
+
+Step 1: Draw parameter values randomly from priors:
+>> python generate_sampling_scheme_demography.py
+
+Output:
+demo_neutral_100kb_logunif_parameters.txt
+
+Step 2: Simulate neutral demographic scenarios:
+>> run_100kb_slim_array_neutral_demo.sh
+which simulates using:
+>> simulate_msprime_inst_change_divergence_abc.py
+and masks coding regions in the output using:
+>> mask_exonic_regions_v2.py
+
+Step 3: Get the statistics:
+>> queue_stats.sh
+>> run_stats_exon50_100kb_msprime_abc.sh
+>> statistics_slidingwindow_pylibseq_general_reps.py
+>> get_divergence_from_msprime.py
+
+Step 4: Make the final list of stats for abc:
+>> python make_table_statistics_abc.py
+
+Output:
+demo_100kb_neutral_2000.stats
