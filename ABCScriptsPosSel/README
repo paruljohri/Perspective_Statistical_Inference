@@ -14,6 +14,7 @@ Step 2: Simulate recurrent positive selection scenarios:
 Step 3: mask coding regions in the output using:
 >> run_mask_ms_array_gro.sh
 >> mask_exonic_regions_v2.py
+and file genome_structure_exon50.txt
 
 Step 4: Get the statistics:
 >> queue_stats.sh
