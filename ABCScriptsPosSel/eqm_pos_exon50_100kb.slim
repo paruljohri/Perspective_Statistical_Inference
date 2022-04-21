@@ -1,0 +1,69 @@
+//To run:
+//slim -d d_gamma=2Nas -d d_f=fraction -d "d_repID='replicate number'" -d "d_folder='folder name'" eqm_pos_exon50_100kb.slim
+
+initialize() {
+    //setSeed(d_seed);
+
+    //set genome structure parameters:
+    inter_len = 1068;
+    intron_len = 100;
+    exon_len = 300;
+    num_genes = 33;
+    num_exons = 5;
+    num_introns = 4;
+    full_block_len = inter_len + exon_len*num_exons + intron_len*num_introns;
+    exon_block_len = exon_len + intron_len;
+    
+    //define pop gen parameters:
+    defineConstant("Na", 5000);
+    defineConstant("mut_rate_mean", 1e-6);
+    defineConstant("rec_rate_mean", 2.0*1e-6);
+    defineConstant("gamma_pos", d_gamma);
+    defineConstant("s_pos", gamma_pos/(2.0*Na));
+    print("mean strength of selection: " + s_pos);
+    defineConstant("f_pos", d_f);//fraction of beneficial mutations
+    
+    // set the overall mutation rate map
+    initializeMutationRate(mut_rate_mean);
+
+    //define the DFE:
+    initializeMutationType("m1", 0.5, "f", 0); //neutral coding
+    initializeMutationType("m2", 0.5, "f", 0); //neutral intergenic
+    initializeMutationType("m3", 0.5, "e", s_pos); //beneficial coding
+
+    // g1 genomic element type: uses m1 for all mutations
+    initializeGenomicElementType("g1", m2, 1.0); //intergenic
+    initializeGenomicElementType("g2", m2, 1.0); //intronic
+    initializeGenomicElementType("g3", c(m1, m3), c(1.0-f_pos, f_pos)); //exons: weakly deleterious, gamma
+
+    //defining genes
+    for (index_a in 0:(num_genes-1)){
+        //print (index1);
+        initializeGenomicElement(g1, (index_a*full_block_len), (index_a*full_block_len + inter_len-1)); //intergenic
+        for (index_b in 0:(num_introns-1)){
+            //print (index_a);
+            //print (index_b);
+            initializeGenomicElement(g3, ((index_a*full_block_len) + inter_len + (index_b*exon_block_len)), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len - 1));//exon
+            initializeGenomicElement(g2, (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len + intron_len-1));//intron
+            }
+        initializeGenomicElement(g3, (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len), (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len + exon_len - 1));//closing with exon
+        }
+    initializeGenomicElement(g1, full_block_len*num_genes, full_block_len*num_genes + inter_len - 1);//extra intergenic towards the end
+    
+    //variable recombination along the chromosome:
+    initializeRecombinationRate(rec_rate_mean);
+}
+1 {
+    sim.addSubpop("p1", Na);
+}
+100100 late(){
+    print("N at end of burn-in: " + p1.individualCount);
+    sampledGen = sample(p1.genomes, 100, replace=F);
+    sampledGen.output(filePath=d_folder + "/output" + d_repID + ".txt", append=F);
+    sampledGen.outputMS(filePath=d_folder + "/output" + d_repID + ".ms", append=F);
+    sim.outputFixedMutations(filePath=d_folder + "/output" + d_repID + ".fixed", append=F);
+    print("N at the end of simulation: " + p1.individualCount);
+    print("The last base in the chromosome: " + sim.chromosome.lastPosition);
+}
+
+
