@@ -1,0 +1,45 @@
+//To run:
+//slim -d "d_repID='replicate number'" -d "d_folder='folder name'" demo_neutral_10kb.slim
+
+initialize() {
+    
+    //define pop gen parameters:
+    defineConstant("Na", d_Nanc);
+    defineConstant("Ncur", d_Ncur);
+    defineConstant("Time", d_time);
+    defineConstant("mut_rate_mean", 1e-6);
+    defineConstant("rec_rate_mean", 2.0*1e-6);
+    
+    // set the overall mutation rate map
+    initializeMutationRate(mut_rate_mean);
+
+    //define the DFE:
+    initializeMutationType("m1", 0.5, "f", 0); //neutral
+
+    // g1 genomic element type: uses m1 for all mutations
+    initializeGenomicElementType("g1", m1, 1.0); //intergenic
+
+    //define genome structure
+    initializeGenomicElement(g1, 0, 9999);
+    
+    //recombination along the chromosome:
+    initializeRecombinationRate(rec_rate_mean);
+}
+1 {
+    sim.addSubpop("p1", Na);
+}
+gen_burnin: {
+    print("N at end of burn-in: " + p1.individualCount);
+    newSize = Ncur;
+    p1.setSubpopulationSize(asInteger(newSize));
+}
+gen_end late(){
+    sampledGen = sample(p1.genomes, 100, replace=F);
+    sampledGen.output(filePath=d_folder + "/output" + d_repID + ".txt", append=F);
+    sampledGen.outputMS(filePath=d_folder + "/output" + d_repID + ".ms", append=F);
+    sim.outputFixedMutations(filePath=d_folder + "/output" + d_repID + ".fixed", append=F);
+    print("N at end of simulation: " + p1.individualCount);
+    print("The last base in the chromosome: " + sim.chromosome.lastPosition);
+}
+
+
