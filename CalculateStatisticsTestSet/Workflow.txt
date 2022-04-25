@@ -1,0 +1,28 @@
+#Workflow to calculate statistics from the test set simulated:
+
+Step 1: Mask coding regions in the ms files:
+>> run_mask_ms_array_slim_const_rates.sh
+>> run_mask_ms_array_slim_var_rates.sh
+>> mask_exonic_regions_v2.py
+
+
+Step 2: Exclude a fraction of randomly chosen singletons to evaluate the effect of ascertainment:
+>> run_exclude_singletons_array_slim_const_rates.sh
+>> exclude_singletons.py
+
+Step 3: Calculate stats:
+>> run_stats_exon50_slim_ascertainment.sh
+>> run_stats_exon50_slim_const_rates.sh
+>> run_stats_exon50_slim_var_rates.sh
+>> statistics_slidingwindow_pylibseq_general_reps.py
+>> get_divergence_from_slim.py
+>> get_lambda_from_slim.py
+>> get_sfs_from_full_output_general_reps.py
+>> get_SFS_from_ms_general_reps.py
+
+Step 4: make a table summarizing the mean and SD of all stats for all scenarios:
+>> make_table_statistics_abc.py
+>> make_table_statistics_singletons_abc.py
+
+Output file:
+testset_100kb_2000.stats
