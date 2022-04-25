@@ -1,0 +1,19 @@
+Figure 1
+scenario2 - eqm_dfe_exon50_100kb_const_rates //done
+scenario5 - eqm_dfe_pos10x_exon50_100kb_const_rates
+scenario34 - bot100gen1sev_dfe_pos10x_exon50_100kb_const_rates_2000gen //done
+
+Figure 2:
+scenario17 - growth2fold_dfe_pos10x_exon50_100kb_const_rates
+
+Figure 3:
+scenario18 - eqm_dfe_exon50_100kb_const_rates_psi0_05
+scenario19 - eqm_dfe_exon50_100kb_const_rates_psi0_1
+
+Figure 4:
+scenario5 - eqm_dfe_pos10x_exon50_100kb_const_rates
+scenario10 - decline_dfe_pos10x_exon50_100kb_const_rates
+scenario17 - growth2fold_dfe_pos10x_exon50_100kb_const_rates
+scenario21 - eqm_dfe_pos10x_exon50_100kb_var_rates
+scenario23 - decline_dfe_pos10x_exon50_100kb_var_rates
+scenario25 - growth2fold_dfe_pos10x_exon50_100kb_var_rates
