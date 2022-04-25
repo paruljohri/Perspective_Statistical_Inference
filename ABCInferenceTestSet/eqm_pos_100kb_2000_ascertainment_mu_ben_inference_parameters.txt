@@ -1,0 +1,4 @@
+scenarioID	gamma	lambda	f1	f2
+scenario1	91	0.19055	0.00261	0.00258
+scenario2	1651	0.20427	0.00018	0.00016
+scenario3	100	0.17932	0.00221	0.00219
