@@ -1,0 +1,10 @@
+Plot joint posteriors:
+>> plot_joint_posterior_pos_ggplot2_nodivergence.r
+>> plot_joint_posterior_demo_ggplot2_nodivergence.r
+
+>> plot_joint_posterior_pos_ggplot2_nodivergence_ascertainment.r
+>> plot_joint_posterior_demo_ggplot2_nodivergence_ascertainment.r
+
+Step 3: Plot statistics:
+>> plot_sfs_ld_div.r
+>> plot_sfs_ld_div_ascertainment.r
