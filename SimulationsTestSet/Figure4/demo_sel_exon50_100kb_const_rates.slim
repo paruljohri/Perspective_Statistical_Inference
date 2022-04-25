@@ -1,0 +1,97 @@
+//To run:
+//slim -d d_seed=seed -d d_Ncur=5000 -d d_f0=f0 -d d_f1=f1 -d d_f2=f2 -d d_f3=f3 -d d_f_pos=2.2e-4 -d "d_repID='replicate number'" -d "d_folder='folder name'" eqm_dfe_exon50_100kb_const_rates.slim
+
+initialize() {
+    setSeed(d_seed);
+
+    //set genome structure parameters:
+    inter_len = 1068;
+    intron_len = 100;
+    exon_len = 300;
+    num_genes = 33;
+    num_exons = 5;
+    num_introns = 4;
+    full_block_len = inter_len + exon_len*num_exons + intron_len*num_introns;
+    exon_block_len = exon_len + intron_len;
+	
+    //define pop gen parameters:
+    defineConstant("Na", 5000);
+    defineConstant("Nc", d_Ncur);
+    defineConstant("mut_rate_mean", 1e-6);
+    defineConstant("rec_rate_mean", 2.0*1e-6);
+    defineConstant("gamma_pos", 125);
+    defineConstant("s_pos", gamma_pos/(2.0*Na));
+    print("mean strength of selection: " + s_pos);
+    defineConstant("f_pos", d_f_pos);//fraction of beneficial mutations
+    defineConstant("f_del", (1.0-f_pos));//fraction of all deleterious classes
+    print("fraction of all deleterious mutations: " + f_del);
+    print("fraction of effectively neutral mutations: " + d_f0*f_del);
+    print("fraction of weakly deleterious mutations: " + d_f1*f_del);
+    print("fraction of moderately deleterious mutations: " + d_f2*f_del);
+    print("fraction of strongly deleterious mutations: " + d_f3*f_del);
+    print("fraction of beneficial mutations: " + f_pos);
+
+    //define selection coefficient boundaries:
+    defineConstant("t0", 0.0);
+    defineConstant("t1", -1.0/(2*Na));
+    defineConstant("t2", -10.0/(2*Na));
+    defineConstant("t3", -100.0/(2*Na));
+    defineConstant("t4", -1.0);
+    print(Na);
+    print(t0);
+    print(t1);
+    print(t2);
+    print(t3);
+    print(t4);
+
+    // set the overall mutation rate map
+    initializeMutationRate(mut_rate_mean);
+
+    //define the DFE:
+    initializeMutationType("m1", 0.5, "f", 0.0); //neutral coding, 2Nes = [0,-1]
+    initializeMutationType("m2", 0.5, "s", "return runif(1, t2, t1);"); // -1<2Nes<-10, uniform distribution
+    initializeMutationType("m3", 0.5, "s", "return runif(1, t3, t2);"); //moderately deleterious, -10<2Nes<-100, uniform distribution
+    initializeMutationType("m4", 0.5, "s", "return runif(1, t4, t3);"); //strongly deleterious, 2Nes>=-100, uniform distribution
+    initializeMutationType("m5", 0.5, "f", 0.0); //neutral intergenic, 2Nes = 0
+    initializeMutationType("m6", 0.5, "e", s_pos); //beneficial class
+
+    // g1 genomic element type: uses m1 for all mutations
+    initializeGenomicElementType("g1", m5, 1.0); //intergenic
+    initializeGenomicElementType("g2", m5, 1.0); //intronic
+    initializeGenomicElementType("g3", c(m1, m2, m3, m4, m6), c(d_f0*f_del, d_f1*f_del, d_f2*f_del, d_f3*f_del, f_pos)); //exons: weakly deleterious, gamma
+
+    //defining genes
+    for (index_a in 0:(num_genes-1)){
+        //print (index1);
+        initializeGenomicElement(g1, (index_a*full_block_len), (index_a*full_block_len + inter_len-1)); //intergenic
+        for (index_b in 0:(num_introns-1)){
+            //print (index_a);
+            //print (index_b);
+            initializeGenomicElement(g3, ((index_a*full_block_len) + inter_len + (index_b*exon_block_len)), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len - 1));//exon
+            initializeGenomicElement(g2, (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len + intron_len-1));//intron
+            }
+        initializeGenomicElement(g3, (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len), (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len + exon_len - 1));//closing with exon
+        }
+    initializeGenomicElement(g1, full_block_len*num_genes, full_block_len*num_genes + inter_len - 1);//extra intergenic towards the end
+
+    //constant recombination along the chromosome:
+    initializeRecombinationRate(rec_rate_mean);
+}
+
+1 {
+    sim.addSubpop("p1", Na);
+}
+100000: {
+    print("N at end of burn-in: " + p1.individualCount);
+    newSize = Nc;
+    p1.setSubpopulationSize(asInteger(newSize));
+}
+100100 late(){
+    sampledGen = sample(p1.genomes, 100, replace=F);
+    sampledGen.output(filePath="output" + d_repID + ".txt", append=F);
+    sampledGen.outputMS(filePath="output" + d_repID + ".ms", append=F);
+    sim.outputFixedMutations(filePath="output" + d_repID + ".fixed", append=F);
+    print("N at the end of simulation: " + p1.individualCount);
+    print("The last base in the chromosome: " + sim.chromosome.lastPosition);
+}
+

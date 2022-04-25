@@ -1,0 +1,130 @@
+//Diploid population with psi = 0.05 and 0.1
+//This script is to run a population of constant size under non-Wright-Fisher dynamics but with a diploid  population. A 100kb genomic element is experiencing neutrality with 50% exonic regions.
+//N=5000, mu=10^-6 per site per gen, rec rate=2*10^-6 per site per gen
+//How to run:
+//slim -d d_seed=seed -d d_psi=psi -d "d_repID='replicate number'" -d "d_folder='path/to/output/folder'" eqm_dfe_exon50_100kb_const_rates_psi.slim
+
+initialize() {
+    setSeed(d_seed);
+    
+    //set genome structure parameters:
+    inter_len = 1068;
+    intron_len = 100;
+    exon_len = 300;
+    num_genes = 33;
+    num_exons = 5;
+    num_introns = 4;
+    full_block_len = inter_len + exon_len*num_exons + intron_len*num_introns;
+    exon_block_len = exon_len + intron_len;
+    
+    //define pop gen parameters:
+    defineConstant("Na", 5000);
+    defineConstant("mut_rate_mean", 1e-6);
+    defineConstant("rec_rate_mean", 2.0*1e-6);
+    defineConstant("psi", d_psi);
+    
+    //define selection coefficient boundaries:
+    defineConstant("t0", 0.0);
+    defineConstant("t1", -1.0/(2*Na));
+    defineConstant("t2", -10.0/(2*Na));
+    defineConstant("t3", -100.0/(2*Na));
+    defineConstant("t4", -1.0);
+    print(Na);
+    print(t0);
+    print(t1);
+    print(t2);
+    print(t3);
+    print(t4);
+
+    // set the overall mutation rate map
+    initializeMutationRate(mut_rate_mean);
+    
+    //specifying the DFE:
+    initializeMutationType("m1", 0.5, "f", 0.0); //neutral coding, 2Nes = [0,-1]
+    initializeMutationType("m2", 0.5, "s", "return runif(1, t2, t1);"); // -1<2Nes<-10, uniform distribution
+    initializeMutationType("m3", 0.5, "s", "return runif(1, t3, t2);"); //moderately deleterious, -10<2Nes<-100, uniform distribution
+    initializeMutationType("m4", 0.5, "s", "return runif(1, t4, t3);"); //strongly deleterious, 2Nes>=-100, uniform distribution
+    initializeMutationType("m5", 0.5, "f", 0.0); //neutral intergenic, 2Nes = 0
+    
+    // g1 genomic element type: uses m1 for all mutations
+    initializeGenomicElementType("g1", m5, 1.0); //intergenic
+    initializeGenomicElementType("g2", m5, 1.0); //intronic
+    initializeGenomicElementType("g3", c(m1, m2, m3, m4), c(d_f0, d_f1, d_f2, d_f3)); //exons: weakly deleterious, gamma
+
+    //defining genes
+    for (index_a in 0:(num_genes-1)){
+        //print (index1);
+        initializeGenomicElement(g1, (index_a*full_block_len), (index_a*full_block_len + inter_len-1)); //intergenic
+        for (index_b in 0:(num_introns-1)){
+            //print (index_a);
+            //print (index_b);
+            initializeGenomicElement(g3, ((index_a*full_block_len) + inter_len + (index_b*exon_block_len)), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len - 1));//exon
+            initializeGenomicElement(g2, (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len + intron_len-1));//intron
+            }
+        initializeGenomicElement(g3, (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len), (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len + exon_len - 1));//closing with exon
+        }
+    initializeGenomicElement(g1, full_block_len*num_genes, full_block_len*num_genes + inter_len - 1);//extra intergenic towards the end
+    
+    //constant recombination along the chromosome:
+    initializeRecombinationRate(rec_rate_mean);
+}
+
+1 {
+    sim.addSubpop("p1", Na);
+    defineConstant("mmcgens2",c(2:(Na*10)));
+    
+    if(psi!=0){
+        for(gen in mmcgens2){
+            
+            sim.registerEarlyEvent(NULL,s2.source, gen, gen);
+            sim.registerModifyChildCallback(NULL,s3.source,NULL,gen,gen);
+            sim.registerLateEvent(NULL,s4.source, gen, gen);
+        
+        }}
+    
+    sim.deregisterScriptBlock(s2);
+    sim.deregisterScriptBlock(s3);
+    sim.deregisterScriptBlock(s4);
+}
+
+//In this block, 1 individual from p1 is made to form p2. Then individuals from p2 migrate into p1 with probability psi. Then N-psi individuals from p1 are tagged with a non-zero tag.
+s2 2 early(){
+    sim.addSubpopSplit(2,1,p1);
+    p1.setMigrationRates(2, psi);
+    countingp1= Na-round(Na*psi);
+    countingother=round(Na-countingp1);
+    countingp1=countingp1+(Na-(countingp1+(countingother)));
+    p1.tag=asInteger(countingp1);
+    p2.tag=asInteger(countingother);
+}
+
+//This callback goes through every individual in every subpopualtion and throws out indivuals that have not been tagged in popualtion p1. It accepts every individual from population p2.
+s3 2 modifyChild(){
+    if(subpop.id==1){
+        if (sourceSubpop.id==1 & p1.tag==0){
+            return(F);}
+        else if (sourceSubpop.tag==0){
+            return(F);}
+        else{
+            sourceSubpop.tag=asInteger(sourceSubpop.tag-1);
+            return(T);}}
+    else{return(T);}
+}
+
+//Remove p2 completely, as it is no more needed.
+s4 2 late(){
+    p2.setSubpopulationSize(0);
+}
+
+//Output sampled individuals:
+50000 late(){
+    sampledGen = sample(p1.genomes, 100, replace=F);
+    sampledGen.output(filePath=d_folder + "/output" + d_repID + ".txt", append=F);
+    sampledGen.outputMS(filePath=d_folder + "/output" + d_repID + ".ms", append=F);
+    sim.outputFixedMutations(filePath=d_folder + "/output" + d_repID + ".fixed", append=F);
+    print("N at the end of simulation: " + p1.individualCount);
+    print("The last base in the chromosome: " + sim.chromosome.lastPosition);
+}
+
+
+
