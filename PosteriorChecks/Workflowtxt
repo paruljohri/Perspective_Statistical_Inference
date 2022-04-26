@@ -1,0 +1,25 @@
+Workflow for performing posterior checks.
+Note: These were only performed for Figure 1
+
+Step 1: Simulate the evolutionary scenario with parameters inferred using ABC:
+>> run_posterior_check_neutral_demo.sh
+>> run_posterior_check_pos_selection.sh
+>> simulate_msprime_inst_change_divergence_abc.py
+>> demo_100kb_neutral_2000_inference_parameters.txt
+>> make_command_file_pos.py
+
+Step 2: mask coding regions
+>> run_mask_ms_array_pos.sh
+>> mask_exonic_regions_v2.py
+
+Step 3: calculate stats:
+>> run_stats_posterior_checks_demo_abc.sh
+>> run_stats_posterior_checks_slim_abc.sh
+>> statistics_slidingwindow_pylibseq_general_reps.py
+>> get_divergence_from_msprime.py
+>> get_divergence_from_slim.py
+>> get_lambda_from_slim.py
+
+Step 4: Make final table of stats:
+>> make_table_statistics_abc_demo.py
+>> make_table_statistics_abc_pos.py
